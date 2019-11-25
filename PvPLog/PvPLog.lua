@@ -6,9 +6,11 @@
     Last Modified:    2011-09-28
 ]]
 
+local PvPLog, PLInternal = ...;
+
 -- Local variables
 local variablesLoaded = false;
-local initialized = false;
+PLInternal.initialized = false;
 
 local notifyQueued = false;
 local queuedMessage = "";
@@ -81,9 +83,16 @@ PVPLOG.VENDOR = "wowroster.net";
 PVPLOG.URL = "http://www."..PVPLOG.VENDOR;
 
 local function PvPLog_GetPlayerMapPosition()
-	local position = C_Map.GetPlayerMapPosition(C_Map.GetBestMapForUnit("player"), "player");
+	local pos;
+	local map = C_Map.GetBestMapForUnit("player");
 	
-	return position.x, position.y;
+	if (map == nil) then
+		return 0, 0;
+	else
+		pos = C_Map.GetPlayerMapPosition(C_Map.GetBestMapForUnit("player"), "player");
+	end
+	
+	return pos.x, pos.y;
 end
 
 -- Called OnLoad of the add on
@@ -133,6 +142,7 @@ function PvPLog_MiniMap_LeftClick()
         PvPLogStatsHide();
     else
         PvPLogStatsShow();
+		PvPLogStats_ShowTab();
     end
 end
  
@@ -222,7 +232,7 @@ function PvPLogOnEvent(self, event, msg)
 		cz_found = false;
         local x, y = PvPLog_GetPlayerMapPosition();
         if ((x == 0) and (y == 0)) then
-            SetMapToCurrentZone();
+            --SetMapToCurrentZone(); --deprecated function
             x, y = PvPLog_GetPlayerMapPosition();
         end    
         -- Determines whether we are in an Instance or not 
@@ -255,7 +265,7 @@ function PvPLogOnEvent(self, event, msg)
        
     -- add record to mouseover
     elseif (event == "UPDATE_MOUSEOVER_UNIT") then
-        if (not initialized or not PvPLogData[realm][player].enabled or not softPL) then
+        if (not PLInternal.initialized or not PvPLogData[realm][player].enabled or not softPL) then
             return;
         end
 
@@ -971,7 +981,7 @@ function PvPLogInitialize()
     plevel = UnitLevel("player");
 	
     -- check for valid realm and player
-    if (initialized or (not variablesLoaded) or (not realm) or 
+    if (PLInternal.initialized or (not variablesLoaded) or (not realm) or 
         (not plevel) or (not player)) then
         return;
     end
@@ -1009,6 +1019,8 @@ function PvPLogInitialize()
     if (PvPLogData[realm][player] == nil) then
         PvPLogInitPvP();
     end
+	
+	PvPLogData[realm][player].dingSound = 5274; --hotfix for new playsound id
     PvPLogData[realm][player].version = PVPLOG.VER_NUM;
     PvPLogData[realm][player].vendor = PVPLOG.VENDOR;
     PvPLogData[realm][player].locale = GetLocale();
@@ -1094,7 +1106,7 @@ function PvPLogInitialize()
 	PvPLogButton_UpdatePosition();
 	PvPLogButtonFrame:Show();
 
-    initialized = true;
+    PLInternal.initialized = true;
 
     -- Report load
     PvPLogChatMsg("PvPLog variables loaded: " .. allRecords .. " records (" .. 
@@ -1121,7 +1133,7 @@ function PvPLogInitPvP()
     
     --PvPLogData[realm][player].MiniMap = { };
     PvPLogData[realm][player].dispLocation = "overhead";
-    PvPLogData[realm][player].dingSound = "AuctionWindowOpen";
+    PvPLogData[realm][player].dingSound = 5274; --"AuctionWindowOpen";
     PvPLogData[realm][player].dingTimeout = 30.0;
     PvPLogData[realm][player].notifyKill = PVPLOG.NONE;
     PvPLogData[realm][player].notifyDeath = PVPLOG.NONE;
@@ -1196,7 +1208,7 @@ function PvPLogGetPvPTotals(name)
 end
 
 function PvPLogGetGuildTotals(guild)
-    if (not initialized) then
+    if (not PLInternal.initialized) then
         PvPLogInitialize();
     end
 
@@ -1451,7 +1463,7 @@ function PvPLogRecord(vname, vlevel, vrace, vclass, vguild, venemy, win, vrank, 
     local x, y = PvPLog_GetPlayerMapPosition();
 	
     if ((x == 0) and (y == 0)) then
-        SetMapToCurrentZone();
+        --SetMapToCurrentZone(); --deprecated function
         x, y = PvPLog_GetPlayerMapPosition();
     end    
     x = math.floor(x*100);
@@ -1672,7 +1684,7 @@ end
 
 function PvPLogSlashHandler(msg)
     -- initialize if we're not for some reason
-    if (not initialized) then
+    if (not PLInternal.initialized) then
       PvPLogInitialize();
     end
 

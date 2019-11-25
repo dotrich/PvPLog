@@ -6,6 +6,8 @@
     Last Modified:    2011-04-26
 ]]
 
+local PvPLog, PLInternal = ...;
+
 local realm = "";
 local player = "";
 local WHITE   = "|cffffffff";
@@ -313,7 +315,7 @@ function PvPLogNotifyDeaths_Toggle_OnClick(self, value)
 end
 
 function PvPLogConfigShow()
-    if (not initialized) then
+    if (not PLInternal.initialized) then
         PvPLogInitialize();
     end
     PvPLogData[realm][player].MiniMap.config = 1;
@@ -321,7 +323,7 @@ function PvPLogConfigShow()
 end
 
 function PvPLogConfigHide()
-    if (not initialized) then
+    if (not PLInternal.initialized) then
         PvPLogInitialize();
     end
     PvPLogData[realm][player].MiniMap.config = 0;
@@ -357,7 +359,7 @@ end
 ------------------------
 
 function PvPLogStatsShow()
-    if (not initialized) then
+    if (not PLInternal.initialized) then
         PvPLogInitialize();
     end
 	
@@ -366,7 +368,7 @@ function PvPLogStatsShow()
 end
 
 function PvPLogStatsHide()
-    if (not initialized) then
+    if (not PLInternal.initialized) then
         PvPLogInitialize();
     end
     PvPLogData[realm][player].MiniMap.stats = 0;
@@ -374,13 +376,15 @@ function PvPLogStatsHide()
 end
 
 function PvPLogStats_ShowTab(name)
-    if (name == "PvP") then
+	local tab = name or "PvP";
+
+    if (tab == "PvP") then
         PVPLOG.STATS_TYPE = PVPLOG.UI_PVP;
-    elseif (name == "Recent") then
+    elseif (tab == "Recent") then
         PVPLOG.STATS_TYPE = PVPLOG.RECENT;
-    elseif (name == "Duel") then
+    elseif (tab == "Duel") then
         PVPLOG.STATS_TYPE = PVPLOG.DUEL;
-    elseif (name == "Target") then
+    elseif (tab == "Target") then
         PVPLOG.STATS_TYPE = PVPLOG.TARGET;
     end
     statsValue = 1;
