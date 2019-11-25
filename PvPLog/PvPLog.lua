@@ -80,6 +80,12 @@ PVPLOG.VER_NUM = GetAddOnMetadata("PvPLog", "Version");
 PVPLOG.VENDOR = "wowroster.net";
 PVPLOG.URL = "http://www."..PVPLOG.VENDOR;
 
+local function PvPLog_GetPlayerMapPosition()
+	local position = C_Map.GetPlayerMapPosition(C_Map.GetBestMapForUnit("player"), "player");
+	
+	return position.x, position.y;
+end
+
 -- Called OnLoad of the add on
 function PvPLogOnLoad(self)
     if (PVPLOG.VER_NUM) then
@@ -214,10 +220,10 @@ function PvPLogOnEvent(self, event, msg)
 		PvPLogInitialize();
         bg_found = false;
 		cz_found = false;
-        local x, y = C_Map.GetPlayerMapPosition(C_Map.GetBestMapForUnit("player"), "player");
+        local x, y = PvPLog_GetPlayerMapPosition();
         if ((x == 0) and (y == 0)) then
             SetMapToCurrentZone();
-            x, y = C_Map.GetPlayerMapPosition(C_Map.GetBestMapForUnit("player"), "player");
+            x, y = PvPLog_GetPlayerMapPosition();
         end    
         -- Determines whether we are in an Instance or not 
         if (x == 0 and y == 0) then -- inside instance
@@ -1441,11 +1447,12 @@ function PvPLogRecord(vname, vlevel, vrace, vclass, vguild, venemy, win, vrank, 
     PurgeLogData[realm][player].battles[PurgeCounter].time = time();
     PurgeCounter = PurgeCounter + 1;
     PurgeLogData[realm][player].PurgeCounter = PurgeCounter;
-
-    local x, y = C_Map.GetPlayerMapPosition(C_Map.GetBestMapForUnit("player"), "player");
+	
+    local x, y = PvPLog_GetPlayerMapPosition();
+	
     if ((x == 0) and (y == 0)) then
         SetMapToCurrentZone();
-        x, y = C_Map.GetPlayerMapPosition(C_Map.GetBestMapForUnit("player"), "player");
+        x, y = PvPLog_GetPlayerMapPosition();
     end    
     x = math.floor(x*100);
     y = math.floor(y*100);
