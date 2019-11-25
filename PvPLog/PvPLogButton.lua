@@ -15,9 +15,10 @@ function PvPLogButton_OnClick(self, button, down)
 end
 
 function PvPLogButton_Init()
-    realm = GetCVar("realmName");
+    realm = GetRealmName()
     player = UnitName("player");
 	PvPLogButtonIcon:SetTexture(PvPLogGetFactionIcon() or "Interface\\Icons\\INV_Misc_QuestionMark")
+	
 	if(PvPLogData[realm][player].MiniMap.enabled) then
 		PvPLogButtonFrame:Show();
 	else

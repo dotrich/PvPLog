@@ -37,7 +37,7 @@ PVPLOG.STATS_TYPE = "";
 -------------------
 
 function PvPLogConfig_OnLoad()
-    realm = GetCVar("realmName");
+    realm = GetRealmName();
     player = UnitName("player");
 end
 
@@ -360,6 +360,7 @@ function PvPLogStatsShow()
     if (not initialized) then
         PvPLogInitialize();
     end
+	
     PvPLogData[realm][player].MiniMap.stats = 1;
     PvPLogStatsFrame:Show();
 end
@@ -387,7 +388,7 @@ function PvPLogStats_ShowTab(name)
 end
 
 function PvPLog_PvPLogStats_OnLoad()
-    realm = GetCVar("realmName");
+    realm = GetRealmName();
     player = UnitName("player");
 end
 

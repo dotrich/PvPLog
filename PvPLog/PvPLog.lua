@@ -82,7 +82,6 @@ PVPLOG.URL = "http://www."..PVPLOG.VENDOR;
 
 -- Called OnLoad of the add on
 function PvPLogOnLoad(self)
-    
     if (PVPLOG.VER_NUM) then
         PVPLOG.STARTUP = string.gsub( PVPLOG.STARTUP, "%%v", PVPLOG.VER_NUM );
     end
@@ -90,6 +89,8 @@ function PvPLogOnLoad(self)
         PVPLOG.STARTUP = string.gsub( PVPLOG.STARTUP, "%%w", PVPLOG.VENDOR );
     end
     PvPLogChatMsgCyan(PVPLOG.STARTUP);
+	
+	self:RegisterEvent("ADDON_LOADED");
 
     -- respond to saved variable load
     self:RegisterEvent("VARIABLES_LOADED");
@@ -149,7 +150,7 @@ function PvPLogMinimapInit()
     return info;
 end
 
-function PvPLogOnEvent(self, event, ...)   
+function PvPLogOnEvent(self, event, msg)
     if (debug_event1) then 
         PvPLogDebugMsg("Event: "..event, GREEN);
     end
@@ -157,7 +158,7 @@ function PvPLogOnEvent(self, event, ...)
         PvPLogDebugAdd("Event: "..event); 
     end
     -- loads and initializes our variables
-    if (event == "VARIABLES_LOADED") then
+    if (event == "ADDON_LOADED") and (msg == "PvPLog") then
         variablesLoaded = true;
         if (PvPLogDebugFlags == nil) then
             PvPLogDebugFlags = { };
@@ -207,16 +208,16 @@ function PvPLogOnEvent(self, event, ...)
         else
             debug_ptc = PvPLogDebugFlags.ptc; -- Manually set to false if you want not use PLAYER_TARGET_CHANGED (for debugging).
         end
-
+		
     -- initialize when entering world
     elseif (event == "PLAYER_ENTERING_WORLD") then
-        PvPLogInitialize();
+		PvPLogInitialize();
         bg_found = false;
 		cz_found = false;
-        local x, y = GetPlayerMapPosition("player");
+        local x, y = C_Map.GetPlayerMapPosition(C_Map.GetBestMapForUnit("player"), "player");
         if ((x == 0) and (y == 0)) then
             SetMapToCurrentZone();
-            x, y = GetPlayerMapPosition("player");
+            x, y = C_Map.GetPlayerMapPosition(C_Map.GetBestMapForUnit("player"), "player");
         end    
         -- Determines whether we are in an Instance or not 
         if (x == 0 and y == 0) then -- inside instance
@@ -957,12 +958,12 @@ function PvPLogUpdateTarget(dueling)
     end
 end
 
-function PvPLogInitialize()   
+function PvPLogInitialize()
     -- get realm and player
-    realm = GetCVar("realmName");
+    realm = GetRealmName();
     player = UnitName("player");
     plevel = UnitLevel("player");
-
+	
     -- check for valid realm and player
     if (initialized or (not variablesLoaded) or (not realm) or 
         (not plevel) or (not player)) then
@@ -970,21 +971,19 @@ function PvPLogInitialize()
     end
 
     isDuel = false;
-
     -- Register command handler and new commands
     SlashCmdList["PvPLogCOMMAND"] = PvPLogSlashHandler;
     SLASH_PvPLogCOMMAND1 = "/pvplog";
     SLASH_PvPLogCOMMAND2 = "/pl";
 
     -- initialize character data structures
-    
     PvPLogDebugMsg('Recents cleared (initialize).');
     recentDamaged = { };
     recentDamager = { };
     lastDamagerToMe = "";
     foundDamaged = false;
     foundDamager = false;
-
+	
     if (targetList == nil) then
         targetList = { };
     end
@@ -994,7 +993,7 @@ function PvPLogInitialize()
     if (targetPlain == nil) then
         targetPlain = { };
     end
-
+	
     if (PvPLogData == nil) then
         PvPLogData = { };
     end
@@ -1023,10 +1022,6 @@ function PvPLogInitialize()
     if (PvPLogData[realm][player].notifyDeath == nil) then
         PvPLogData[realm][player].notifyDeath = PVPLOG.NONE;
     end
-
-    if (PvPLogData[realm][player].MiniMap == nil) then
-        PvPLogData[realm][player].MiniMap = { };
-    end;
 
     if (PvPLogData[realm][player].display == nil) then
         PvPLogData[realm][player].display = true;
@@ -1086,6 +1081,7 @@ function PvPLogInitialize()
     local allRecords = stats.totalWins + stats.totalLoss;
 
 	if (PvPLogData[realm][player].MiniMap == nil) then
+		PvPLogData[realm][player].MiniMap = { };
 		PvPLogData[realm][player].MiniMap = PvPLogMinimapInit();
 	end
 	PvPLogButton_Init();
@@ -1117,7 +1113,7 @@ function PvPLogInitPvP()
     PvPLogData[realm][player].recordCZ = true;
     PvPLogData[realm][player].notifyCZ = true;
     
-    PvPLogData[realm][player].MiniMap = { };
+    --PvPLogData[realm][player].MiniMap = { };
     PvPLogData[realm][player].dispLocation = "overhead";
     PvPLogData[realm][player].dingSound = "AuctionWindowOpen";
     PvPLogData[realm][player].dingTimeout = 30.0;
@@ -1446,10 +1442,10 @@ function PvPLogRecord(vname, vlevel, vrace, vclass, vguild, venemy, win, vrank, 
     PurgeCounter = PurgeCounter + 1;
     PurgeLogData[realm][player].PurgeCounter = PurgeCounter;
 
-    local x, y = GetPlayerMapPosition("player");
+    local x, y = C_Map.GetPlayerMapPosition(C_Map.GetBestMapForUnit("player"), "player");
     if ((x == 0) and (y == 0)) then
         SetMapToCurrentZone();
-        x, y = GetPlayerMapPosition("player");
+        x, y = C_Map.GetPlayerMapPosition(C_Map.GetBestMapForUnit("player"), "player");
     end    
     x = math.floor(x*100);
     y = math.floor(y*100);
