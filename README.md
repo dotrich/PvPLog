@@ -1,3 +1,5 @@
+PORTED FOR WOW CLASSIC - PERSONAL USE
+
 # pvplog
 Automatically exported from code.google.com/p/wowroster-pvplog
 
