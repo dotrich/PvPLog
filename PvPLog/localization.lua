@@ -130,6 +130,7 @@ PVPLOG = {};
     PVPLOG.TT_MINION = "'s Minion"
     PVPLOG.TT_CREATION = "'s Creation"
     PVPLOG.TT_GUARDIAN = "'s Guardian"
+	PVPLOG.TT_TOTEM = "'s Totem"
     PVPLOG.TT_LEVEL2 = "Level ([%d%?]+)"
 
 --***********
@@ -251,7 +252,7 @@ if (GetLocale() == "deDE") then
     PVPLOG.TT_MINION = "Diener von " --- Diener von Name
     PVPLOG.TT_CREATION = "Kreatur von "
     PVPLOG.TT_GUARDIAN = "W\195\164chter von "
-
+	PVPLOG.TT_TOTEM = "'s Totem"
     PVPLOG.TT_LEVEL2 = "Level ([%d%?]+)"
 
 elseif (GetLocale() == "frFR") then
@@ -375,6 +376,7 @@ elseif (GetLocale() == "frFR") then
     PVPLOG.TT_MINION = "'s Minion"
     PVPLOG.TT_CREATION = "'s Creation"
     PVPLOG.TT_GUARDIAN = "'s Guardian"
+	PVPLOG.TT_TOTEM = "'s Totem"
     PVPLOG.TT_LEVEL2 = "Level ([%d%?]+)"
 
 elseif (GetLocale() == "esES") then
@@ -493,6 +495,7 @@ elseif (GetLocale() == "esES") then
     PVPLOG.TT_MINION = "'s Minion"
     PVPLOG.TT_CREATION = "'s Creation"
     PVPLOG.TT_GUARDIAN = "'s Guardian"
+	PVPLOG.TT_TOTEM = "'s Totem"
     PVPLOG.TT_LEVEL2 = "Level ([%d%?]+)"
 
 end
