@@ -45,7 +45,7 @@ local debug_event2 = false;   -- Overridden by PvPLogDebug.event2 after VARIABLE
 local debug_combat = false;   -- Overridden by PvPLogDebug.combat after VARIABLES_LOADED event.
 local debug_pve = false;      -- Overridden by PvPLogDebug.pve after VARIABLES_LOADED event.
 local debug_ui = false;       -- Overridden by PvPLogDebug.ui after VARIABLES_LOADED event.
-local debug_ptc = true;       -- Overridden by PvPLogDebug.ptc after VARIABLES_LOADED event.
+local debug_ptc = false;       -- Overridden by PvPLogDebug.ptc after VARIABLES_LOADED event.
 local debug_ttm = false;
 local debug_ttv = false;
 
@@ -366,11 +366,11 @@ function PvPLogOnEvent(self, event, msg)
 -- Combat Events now all come here
     elseif ( event == "COMBAT_LOG_EVENT_UNFILTERED") then
 
-        CombatLogSetCurrentEntry(-1,true);
-        local timestamp, etype, hideCaster, srcGUID, srcName, srcFlags, srcRaidFlags, dstGUID, dstName, dstFlags, dstRaidFlags, u1, u2, u3, u4, u5, u6, u7, u8 = CombatLogGetCurrentEntry(); 
+        CombatLogSetCurrentEntry(-1,true);        
+		local timestamp, etype, hideCaster, srcGUID, srcName, srcFlags, srcRaidFlags, dstGUID, dstName, dstFlags, dstRaidFlags, u1, u2, u3, u4, u5, u6, u7, u8 = CombatLogGetCurrentEntry();
 
         local message = "";
-        if (debug_flag) then
+		if (debug_flag) then
 			message = string.format("%s, %s, %s, %s, 0x%x, 0x%x, %s, %s, 0x%x, 0x%x; %s, %s, %s, %s, %s, %s, %s, %s",
 				tostring(etype),
 				tostring(hideCaster),
@@ -379,6 +379,7 @@ function PvPLogOnEvent(self, event, msg)
 				tostring(u1), tostring(u2), tostring(u3), tostring(u4),
 				tostring(u5), tostring(u6), tostring(u7), tostring(u8));
         end
+
 --
 -- This is where the fun begins. 
 -- Decoding the combat events (type) into what damaged me and what I damaged.
@@ -419,6 +420,7 @@ function PvPLogOnEvent(self, event, msg)
 							end
 						end
 						PvPLogChatMsgCyan("PvP "..PVPLOG.DLKB..RED..lastDamagerToMe);
+						print(lastDamagerToMe, ' ', v.guild, ' ', v.realm);
 						PvPLogRecord(lastDamagerToMe, v.level, v.race, v.class, v.guild, 1, 0, v.rank, v.realm);
 					else
 						PvPLogDebugMsg("Empty targetRecords for: "..lastDamagerToMe, RED);
@@ -529,6 +531,9 @@ end
 
 function PvPLogDebugAdd(msg)
     if (debug_flag) then
+		if (PvPLogDebug == nil) then
+			PvPLogDebug = {};
+		end
         table.insert(PvPLogDebug,date()..": "..msg);
         if (table.getn(PvPLogDebug) > MAXDEBUG) then
             table.remove(PvPLogDebug,1);
@@ -692,12 +697,13 @@ function PvPLogUnitName(unit)
     return name;
 end
 
+--custom
 function PvPLogGetTooltipText(table, name, guid)
     local m = 0;
     local l = 0;
     local text = { };
     local level;
-
+	
     if (debug_ttv) then
         PvPLogDebugMsg("name = '"..name.."', guid = '"..tostring(guid).."'");
     end
@@ -714,16 +720,19 @@ function PvPLogGetTooltipText(table, name, guid)
     end
     for n = 1, m do
         if (guid) then
-            text[n] = _G['PvPLogTooltipTextLeft'..n]:GetText();
-        else
-            text[n] = _G['GameTooltipTextLeft'..n]:GetText();
+			text[n] = _G['PvPLogTooltipTextLeft'..n]:GetText();
+        else 
+			text[n] = _G['GameTooltipTextLeft'..n]:GetText();
         end
         if (debug_ttv) then
-            PvPLogDebugMsg("text["..n.."] = "..tostring(text[n]));
+            PvPLogDebugMsg("text["..(n).."] = "..tostring(text[n]));
         end
-        if (string.find(text[n], PVPLOG.TT_LEVEL)) then
-            l = n;
-        end    
+		
+		if text[n] then
+			if string.find(text[n], "[%d%?]+") then
+				l = n;
+			end
+		end
     end
     if (l > 0) then
         _, _, level, table.race, table.class = string.find(text[l], PVPLOG.TT_PLAYER);
@@ -735,6 +744,7 @@ function PvPLogGetTooltipText(table, name, guid)
     end
     if (l == 3) then
         local left, found = string.gsub(text[2], PVPLOG.TT_PET, "");
+		
         if (found ~= 1) then
             left, found = string.gsub(text[2], PVPLOG.TT_MINION, "");
         end
@@ -744,11 +754,15 @@ function PvPLogGetTooltipText(table, name, guid)
         if (found ~= 1) then
             left, found = string.gsub(text[2], PVPLOG.TT_GUARDIAN, "");
         end
+		if (found ~= 1) then
+            left, found = string.gsub(text[2], PVPLOG.TT_TOTEM, "");
+        end
 
         if (found == 1) then
             table.owner = left;
             _, _, level = string.find(text[3], PVPLOG.TT_LEVEL2);
-            if (level == "??") then
+            
+			if (level == "??") then
                 table.level = -1;
             else
                 table.level = tonumber(level);
@@ -756,10 +770,11 @@ function PvPLogGetTooltipText(table, name, guid)
         else
             table.guild = text[2];
         end
-    end
+    end	
     if (m > 0) then
         local left;
         left, table.realm = PvPLogFindRealm(text[1]);
+		
         if (left) then
             table.rank = PvPLogFindRank(left, name);
         else
@@ -767,6 +782,84 @@ function PvPLogGetTooltipText(table, name, guid)
         end
     end
 end
+
+-- function PvPLogGetTooltipText(table, name, guid)
+    -- local m = 0;
+    -- local l = 0;
+    -- local text = { };
+    -- local level;
+
+    -- if (debug_ttv) then
+        -- PvPLogDebugMsg("name = '"..name.."', guid = '"..tostring(guid).."'");
+    -- end
+    -- if (guid) then
+        -- PvPLogTooltip:SetHyperlink("unit:" .. guid);
+        -- hide = true;
+        -- table.guid = guid;
+        -- m = PvPLogTooltip:NumLines();
+    -- else
+        -- m = GameTooltip:NumLines();
+    -- end
+    -- if (debug_ttv) then
+        -- PvPLogDebugMsg("m = "..tostring(m));
+    -- end
+    -- for n = 1, m do
+        -- if (guid) then
+            -- text[n] = _G['PvPLogTooltipTextLeft'..n]:GetText();
+        -- else
+            -- text[n] = _G['GameTooltipTextLeft'..n]:GetText();
+        -- end
+        -- if (debug_ttv) then
+            -- PvPLogDebugMsg("text["..n.."] = "..tostring(text[n]));
+        -- end
+		-- if (text[n] ~= nil) then
+			-- if string.find(text[n], PVPLOG.TT_LEVEL) then
+				-- l = n;
+			-- end   
+		-- end		
+    -- end
+    -- if (l > 0) then
+        -- _, _, level, table.race, table.class = string.find(text[l], PVPLOG.TT_PLAYER);
+        -- if (level == "??") then
+            -- table.level = -1;
+        -- else
+            -- table.level = tonumber(level);
+        -- end
+    -- end
+    -- if (l == 3) then
+        -- local left, found = string.gsub(text[2], PVPLOG.TT_PET, "");
+        -- if (found ~= 1) then
+            -- left, found = string.gsub(text[2], PVPLOG.TT_MINION, "");
+        -- end
+        -- if (found ~= 1) then
+            -- left, found = string.gsub(text[2], PVPLOG.TT_CREATION, "");
+        -- end
+        -- if (found ~= 1) then
+            -- left, found = string.gsub(text[2], PVPLOG.TT_GUARDIAN, "");
+        -- end
+
+        -- if (found == 1) then
+            -- table.owner = left;
+            -- _, _, level = string.find(text[3], PVPLOG.TT_LEVEL2);
+            -- if (level == "??") then
+                -- table.level = -1;
+            -- else
+                -- table.level = tonumber(level);
+            -- end
+        -- else
+            -- table.guild = text[2];
+        -- end
+    -- end
+    -- if (m > 0) then
+        -- local left;
+        -- left, table.realm = PvPLogFindRealm(text[1]);
+        -- if (left) then
+            -- table.rank = PvPLogFindRank(left, name);
+        -- else
+            -- table.rank = PvPLogFindRank(text[1], name);
+        -- end
+    -- end
+-- end
 
 -- Add to recentDamaged or recentDamager Lists (if not already there).
 function PvPLogPutInTable(tab, nam)
